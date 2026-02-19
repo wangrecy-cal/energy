@@ -25,6 +25,8 @@ Backtest (March 2025)
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 import warnings
@@ -209,13 +211,27 @@ peak_day_data['shape_factor'] = peak_day_data['pred_adj'] / L_star
 
 print(f"\n── SHAPE FACTORS for {peak_date26} (L* = {ensemble_forecast:,.0f} MW) ──")
 print(f"  (sh = forecast_hour_load / L*; max sh = 1.00 by construction)")
-print()
-print(f"  {'Hour':>4}  {'sh':>6}  {'Bar':}")
-for _, row in peak_day_data.iterrows():
-    bar = '█' * int(row['shape_factor'] * 25)
-    print(f"  {row['Hour']:>4}  {row['shape_factor']:.4f}  {bar}")
 
-# Summary table for write-up
+# plot shape factor bar chart（per hour）
+plot_df = peak_day_data.sort_values('Hour').copy()
+plt.figure(figsize=(12, 4))
+sns.barplot(x='Hour', y='shape_factor', data=plot_df, palette='viridis')
+plt.ylim(0, 1.05)
+plt.title(f"Shape Factors for {peak_date26} (L* = {ensemble_forecast:,.0f} MW)")
+plt.xlabel('Hour')
+plt.ylabel('Shape factor (sh)')
+# label each bar with its shape factor value
+for _, r in plot_df.iterrows():
+    plt.text(r['Hour']-1, r['shape_factor'] + 0.02, f"{r['shape_factor']:.3f}",
+             ha='center', va='bottom', fontsize=9)
+plt.tight_layout()
+# 自动保存图像（便于在无图形界面的环境中查看）
+out_png = f"shape_factors_{peak_date26}.png"
+plt.savefig(out_png, dpi=150, bbox_inches='tight')
+print(f"  Saved shape factors plot to: {out_png}")
+plt.show()
+
+# Summary table for write-up 
 sf_dict = dict(zip(peak_day_data['Hour'], peak_day_data['shape_factor'].round(4)))
 print(f"\n  Key shape factors:")
 for h in [2, 8, 9, 11, 13, 19]:
